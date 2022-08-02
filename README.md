@@ -8,6 +8,6 @@
 > java NET 具体信息和我司联系https://dq.cn
 
 #### 6. 链接
-> 格式为`[文本](链接)`，例如[薪旺通](https://xwtmer.dq.cn)
+> 产品官网[薪旺通](https://xwtmer.dq.cn)
 
 ---
