@@ -1,0 +1,8 @@
+server:
+  port: 6088
+spring:
+  application:
+    name: xwtapisample
+DuQeeConfig:
+  publicKey:
+  privateKey:
