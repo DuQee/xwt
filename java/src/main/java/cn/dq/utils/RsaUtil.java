@@ -78,7 +78,7 @@ public class RsaUtil {
         //用公钥初始化此Cipher对象（加密模式）
         cipher.init(Cipher.ENCRYPT_MODE, publicKey);
         //对数据加密
-        byte[] encrypt =  getMaxResultEncrypt(data,cipher);
+        byte[] encrypt =  cipher.doFinal( data.getBytes());//getMaxResultEncrypt(data,cipher);
         //返回base64编码后的字符串
         return Base64.getEncoder().encodeToString(encrypt);
     }
@@ -111,7 +111,7 @@ public class RsaUtil {
     }
 
     private static byte[] getMaxResultEncrypt(String str,  Cipher cipher) throws Exception {
-        byte[] inputArray = Base64.getDecoder().decode(str);
+        byte[] inputArray = Base64.getMimeDecoder().decode(str);
         int inputLength = inputArray.length;
         int MAX_ENCRYPT_BLOCK = 256;
         // 标识
