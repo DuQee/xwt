@@ -111,7 +111,7 @@ public class RsaUtil {
     }
 
     private static byte[] getMaxResultEncrypt(String str,  Cipher cipher) throws Exception {
-        byte[] inputArray = Base64.getDecoder().decode(str);
+        byte[] inputArray = Base64.getMimeDecoder().decode(str);
         int inputLength = inputArray.length;
         int MAX_ENCRYPT_BLOCK = 256;
         // 标识
