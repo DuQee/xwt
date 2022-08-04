@@ -7,7 +7,13 @@
 #### 2. API
 > java NET 具体信息和我司联系https://dq.cn
 
+### 3.运行环境
+> JDK 8
+> java version "1.8.0_202"
+> Java(TM) SE Runtime Environment (build 1.8.0_202-b08)
+> Java HotSpot(TM) 64-Bit Server VM (build 25.202-b08, mixed mode)
+
 #### 6. 链接
 > 产品官网[薪旺通](https://xwtmer.dq.cn)
 
----
+
