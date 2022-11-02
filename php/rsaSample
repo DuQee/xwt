@@ -1,0 +1,218 @@
+<?php
+/**
+ * Created by PhpStorm.
+ * User: admin
+ * Date: 2017/8/18
+ * Time: 17:50
+ */
+ 
+ 
+
+class  Duqi
+{
+
+/**
+     * author xiaohuihui <xzh_tx@163.com>
+     * @param $url 请求的url
+     * @param $option 发送的字段
+     * @param int|array $header 发送的头信息
+     * @param string $type 请求方法，默认post
+     * @return mixed | array
+     */
+    public static function RequestCurlPay($url, $options=null, $header = [], $type = 'GET') {
+
+        $curl = curl_init (); // 启动一个CURL会话
+        
+        curl_setopt_array($curl, array(
+          CURLOPT_URL => $url,
+          CURLOPT_RETURNTRANSFER => true,
+          CURLOPT_ENCODING => '',
+          CURLOPT_MAXREDIRS => 10,
+          CURLOPT_TIMEOUT => 0,
+          CURLOPT_FOLLOWLOCATION => true,
+          CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+          CURLOPT_CUSTOMREQUEST => 'POST',
+          CURLOPT_POSTFIELDS =>$options,
+          CURLOPT_HTTPHEADER => $header,
+        ));
+
+        $response = curl_exec($curl);
+
+        curl_close($curl);
+        return  $response;
+    }
+    /**
+     * RSA单独签名方法，未做字符串处理,字符串处理见getSignContent()
+     * @param $data 待签名字符串
+     * @param $privatekey 商户私钥，根据keyfromfile来判断是读取字符串还是读取文件，false:填写私钥字符串去回车和空格 true:填写私钥文件路径
+     * @param $signType 签名方式，RSA:SHA1     RSA2:SHA256
+     * @param $keyfromfile 私钥获取方式，读取字符串还是读文件
+     * @return string
+     * @author mengyu.wh
+     */
+    public static function alonersaSign($data, $privatekey, $signType = "RSA2", $keyfromfile = false)
+    {
+    
+        if (!$keyfromfile) {
+            $priKey = $privatekey;
+            $res = "-----BEGIN RSA PRIVATE KEY-----\n" .
+                wordwrap($priKey, 64, "\n", true) .
+                "\n-----END RSA PRIVATE KEY-----";
+		
+	
+        } else {
+            $priKey = file_get_contents($privatekey);
+            $res = openssl_get_privatekey($priKey);
+        }
+	
+	
+	
+        ($res) or die('您使用的私钥格式错误，请检查RSA私钥配置');
+	
+        if ("RSA2" == $signType) {
+            openssl_sign($data, $sign, $res, OPENSSL_ALGO_SHA256);
+        } else {
+            openssl_sign($data, $sign, $res);
+        }
+	
+	   
+
+        if ($keyfromfile) {
+            openssl_free_key($res);
+        }
+	
+	
+        $sign = base64_encode($sign);
+        return $sign;
+    }
+
+    public static function verify($data, $sign, $publicKey, $signType = 'RSA')
+    {
+
+        $pubKey = $publicKey;
+        $res = "-----BEGIN PUBLIC KEY-----\n" .
+            wordwrap($pubKey, 64, "\n", true) .
+            "\n-----END PUBLIC KEY-----";
+
+        ($res) or die('支付宝RSA公钥错误。请检查公钥文件格式是否正确');
+
+        //调用openssl内置方法验签，返回bool值
+
+        if ("RSA2" == $signType) {
+            $result = (bool)openssl_verify($data, base64_decode($sign), $res, OPENSSL_ALGO_SHA256);
+        } else {
+            $result = (bool)openssl_verify($data, base64_decode($sign), $res);
+        }
+
+        return $result;
+    }
+
+
+    //收款人信息进件，信息实名
+    public static function FlexibleRegister(){
+
+    }
+    
+    private static $key = "MIIEogIBAAKCAQEAnBEaoP5IiH5p1kfbe/9oK6IPKr+dlZQkaKlFy6c3/8ViDA+WFe6wOhDJLC0SaCmHmp+LNR7GniQhDRBWf3v4Fp2YzFAVCpgKTeaBMMwLogF+yp00C1JieJBV5fD6oD4sJEDpK9ksC1CUSftLO9eeH/2do9b6lzM6qHmLXOAKR0Cp+R26eCcEEXSiXCYCrBExlm83SzFGl++OVBHxz+oQhFfSaynPhy+Jr2hzUag655+Z8S2jcT82a/YQS89StOh9kkUL8hrOV0NWI965crA+JlJF/qp2iN2KEQwYTXUxZFLXVwV4jXW7iBmqiOuGRO0Eg1ji3PmW7b7LT39tRzCBNwIDAQABAoIBAAUOuaOXLSr3MpJvuH+9/1ZpC9kuMnrv1qo2ahbQ1j8jDcVar/NwAIsxLHb5BiXhl3P96mX2ffTb/0VltSSwE/ivplotcjEdfwZjpOYiID8uXmyBSBF7dWN3OFr/2/woNG5l7oIUQwAiEVwmzGfypqL39g08LaZYUg6DOdS9q4RmWVxZRng8RsEt2zkJ3xPMmO7A5UrwUozX2s110vp3bW1HIR2z1cbs8VTyAO/esG541h9G2s3oZUYx9zR3YZEh64an/UuMrzMj8Mr7OLFjk68bgD5qHUwUdb9tx6exakFHppzVyc8A+AoClVq+wMmY10KHE+6YDjxJG+U3hK8wvMECgYEA+3JFDxtUTdwRAHYQNFox7hQwXjQ7e9HRB1o4EVo7OO3CvYuyCj+dezh3VMTTOX+19R/9OneQTbsd8dkla6Jqk7WwyHm5z/ayE8pibhOvR7Au8sRCA7YCWsPv6MAsKAf9Em6TolBqLpthjYx2HKR5ZJfspZhltvXfPbuVZbguyOECgYEAnuSlLE0vBX4AF2NvHHHIIOVfgicuy9COq8AiSrEJFxlxw7LHLAHif0ELdYvK0d7Bbs1b16iPjAWT/Y+kkiCDFvIqb71IAAN4ddpjSSblix+qVZOo7Fn2CZYFRfaagLsQz1YWJl+eSgEQOzOnAqUBLa1H1Fel+epOqvlbnOrCFRcCgYAa/cIyA/IBxZzBmurUY9Y2Q06J3juAaB5zFpksK65txv//js5W0UtbXc1ZeSNfabkjjgKF0y3XWj21p2Sf8DhWkMtgScjLbSTigPgd7tkC7gOsJasccN5B1gSbzH0w8uKUpvAMHWu4gw9uvWQ0YOdzB+fsQrawdCY5nzhDSgkjoQKBgCZzJ/EvgEhw9C60tieI9SfYuaLyPmW9wziWlvXCH3QCiUAVHBNvJVMr90zrlhnxMJfSg/4M4Se+FdDPGMDvsykzUseVYz31mQnT3iDOk891yy9IOyFup5YsQnxqr3qlSe0SZOvGSbSYy0e4ORrvuPhHrVEaIKT4aS8AhoXTXUHjAoGAbm7lX7bLmGBkgEeiaSPWYEfSOTNwxpHvZpC3ccJjOujjAGqhljqtSxOvwRS302okSIRkdYH3xoc0gkPwhnC2Srm18tQpc4N8sIL7fBz7lpV5xoJ2Ye7MFejOkliRsWQpM3doy49NnwfJ2EzzpORA9ru2XXs4dNU+nQvkRAVbzDc=";
+    
+    private static $pkey = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAjKvj/70BMI1Y9sHSTTeUF40JYbUT7TRwyzF7puxyIzuRL03zn1aKGOeiDb9t6CEL2VdgZ7yI4jY9FSgknGr6yzilwQLvh+bvgaTFuZdY/os9S2otWnjPL+IQnFpLaIaoEQUZoZ3aV0D4n/gKupFj5GYnnlLnP+K2Wx1pN+XOZ7nEW8TuflaxRtkeJsUsbFjdFYqjBw/kjLWEndGMCn3qbgzreQFRYixNT7BM75hYEB3ZRq8b5T6UcU5Qsd8ssDdf7T7PA0mTzilCHSoIMx6phYhxG3bf/zudmSQR+6MLr2NbE0L/F4opb6EYY3uB9nWK5/uNQqJDnofD5atcBlJ3DwIDAQAB";
+    
+    //demo1 获取银行卡信息
+    public static function FlexibleBanks(){
+        $pay_data = array();
+        
+        $pay_data['mchid'] = $pay_config['mchid']??"1587293811556904960";
+        $pay_data['version'] = $pay_config['version']??"1.0";
+        $pay_data['tranCode'] = "1006";
+        $pay_data['timestamp'] = date("Y-m-d H:i:s");
+        $pay_data['nonceStr'] = mb_substr(md5(uniqid()),0,17);
+        $pay_data['signType'] = "RSA2";
+        $pay_data['tradeNo'] = $data['order_id']??uniqid();
+        $pay_data['bizContent'] = self::encrypt(json_encode(array(
+            "parkCode" => '1585593579861340161',
+        )));
+	    ksort($pay_data);
+        $data = urldecode(http_build_query($pay_data));
+        $sign = self::alonersaSign($data, self::$key);
+        $pay_data['sign'] = $sign;
+        $ss = "http://lgapi.vev.cn:8002/v1/api/flexible/banks";
+	    $s = json_encode($pay_data);
+        $ret = self::RequestCurlPay($ss,$s,array(
+	        "content-type: application/json"
+	    ),"POST");
+
+	    $_ret = json_decode($ret,true);
+
+	    var_dump( self::decrypt($_ret['bizContent']));
+    }
+    
+    
+    /**
+     * 格式化公钥
+     * @param $publicKey string 公钥
+     * @return string
+     */
+    public static function formatterPublicKey($publicKey)
+    {
+
+        $res = "-----BEGIN PUBLIC KEY-----\n" .
+            wordwrap($publicKey, 64, "\n", true) .
+            "\n-----END PUBLIC KEY-----";
+
+        return $res;
+    }
+    /**
+     * 格式化私钥
+     * @param $priKey string 私钥
+     * @return string
+     */
+    public static function formatterPrivateKey($priKey)
+    {
+        $res = "-----BEGIN RSA PRIVATE KEY-----\n" .
+            wordwrap($priKey, 64, "\n", true) .
+            "\n-----END RSA PRIVATE KEY-----";
+        return $res;
+    }
+    /**
+     *  私钥分段解密
+     *  emptyStr    加密字符串
+     */
+    public static function decrypt($encryptData){
+
+        $privateKey = openssl_pkey_get_private(self::formatterPrivateKey(self::$key));
+        $privateKey or die('密钥不可用');
+        $decryptData = '';
+        $crypto = '';
+        $ed = str_split(base64_decode($encryptData),256);
+        foreach ($ed as $chunk) {
+            if(openssl_private_decrypt($chunk, $decryptData, $privateKey)){
+                $crypto .= $decryptData;
+            }else{
+                die('解密失败');
+            }
+        }
+        return $crypto;
+    }
+    /**
+     *  公钥加密（分段加密）
+     *  emptyStr    需要加密字符串
+     */
+    function encrypt($originalData){
+
+        $publicKey = openssl_pkey_get_public(self::formatterPublicKey(self::$pkey)); //解析公钥
+        $crypto = '';
+
+        foreach (str_split($originalData, 256) as $chunk) {
+            $encryptData = '';
+            if(openssl_public_encrypt($chunk, $encryptData, $publicKey)){
+                $crypto .= $encryptData;
+            }else{
+                die('加密失败');
+            }
+        }
+        return base64_encode($crypto);
+    }
+
+}
+
+var_dump(Duqi::FlexibleBanks());
